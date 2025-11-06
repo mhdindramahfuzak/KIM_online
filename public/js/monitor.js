@@ -6,7 +6,7 @@ const calledNumbersList = document.getElementById('called-numbers-list');
 const monitorGridHeader = document.getElementById('monitor-grid-header'); 
 
 // Durasi animasi (HARUS SAMA DENGAN DI CSS: 2.5s = 2500ms)
-const ANIMATION_DURATION = 2500; 
+const ANIMATION_DURATION = 6000; 
 
 let lastNumber = '-'; // Simpan angka terakhir
 let isAnimating = false; // Status biar animasi tidak tumpang tindih

@@ -88,7 +88,6 @@
 .ticket-grid-5x6 {
   /* (BARU) Biarkan grid mengambil sisa ruang */
   flex: 1; 
-  
   display: grid;
   grid-template-columns: repeat(5, 1fr); 
   grid-template-rows: repeat(6, auto); 
@@ -97,6 +96,7 @@
   border: 2px solid #333; 
   overflow: hidden; 
   border-radius: 8px;
+  min-width: 0; /* Penting untuk mencegah overflow di mobile */
 }
 
 .number-cell {
