@@ -31,6 +31,7 @@ let gameState = {
   maxWinners: 10,
   winCondition: '1_row',
   isPaused: false,
+  ticketColor: 'yellow', // <-- TAMBAHAN BARU (default)
 };
 let players = new Map();
 
@@ -57,8 +58,6 @@ function generateTicket() {
 
   const rows = [];
   for (let i = 0; i < 6; i++) {
-      // --- PERBAIKAN DI SINI ---
-      // Kita HAPUS .sort() agar data baris = data visual
       rows.push([
           cols[0][i], 
           cols[1][i], 
@@ -66,13 +65,12 @@ function generateTicket() {
           cols[3][i], 
           cols[4][i]
       ]);
-      // --- AKHIR PERBAIKAN ---
   }
 
   return {
     id: `T-${Math.random().toString(36).substr(2, 9)}`,
-    rows: rows, // Sekarang berisi data baris visual (tidak diurut)
-    cols: cols, // Ini masih dipakai untuk membuat tiket, tidak apa-apa
+    rows: rows, 
+    cols: cols, 
     allNumbers: arr,
     claimedRowIndices: new Set(),
     winClaims: new Set() 
@@ -91,13 +89,19 @@ function startGame(settings) {
   gameState.isPaused = false;
   gameState.maxWinners = settings.maxWinners || 10;
   gameState.winCondition = settings.winCondition || '1_row';
+  gameState.ticketColor = settings.ticketColor || 'yellow'; // <-- TAMBAHAN BARU
 
+   // --- ( Logika Tiket Baru ) ---
    players.forEach(player => {
-    player.tickets.forEach(ticket => {
-      ticket.claimedRowIndices.clear();
-      ticket.winClaims.clear();
-    });
+    const newTicket = generateTicket();
+    player.tickets = [newTicket];
+    console.log(`Memberikan tiket baru untuk ${player.name}`);
+    const playerSocket = io.sockets.sockets.get(player.socketId);
+    if (playerSocket) {
+        playerSocket.emit('PLAYER_DATA', player); 
+    }
    });
+   // --- ( AKHIR LOGIKA TIKET BARU ) ---
 
   io.emit('GAME_START', { winCondition: gameState.winCondition });
   io.emit('GAME_STATE_UPDATE', getEmitSafeGameState());
@@ -112,12 +116,23 @@ function stopGame(message = 'Permainan dihentikan oleh Admin.') {
   console.log(message);
 }
 
-function togglePauseGame() {
+function togglePauseGame(newSettings = null) { 
     if (gameState.status !== 'running' && gameState.status !== 'paused') return;
+    
     gameState.isPaused = !gameState.isPaused;
     gameState.status = gameState.isPaused ? 'paused' : 'running';
+
+    // --- ( Logika Update Settings saat Pause ) ---
+    if (!gameState.isPaused && newSettings) {
+        gameState.winCondition = newSettings.winCondition;
+        gameState.maxWinners = newSettings.maxWinners;
+        gameState.ticketColor = newSettings.ticketColor; // <-- TAMBAHAN BARU
+        console.log(`Admin mengubah settings saat pause: Target=${newSettings.winCondition}, Max=${newSettings.maxWinners}, Warna=${newSettings.ticketColor}`);
+    }
+    // --- ( AKHIR LOGIKA UPDATE ) ---
+
     io.emit('GAME_PAUSE_TOGGLE', gameState.isPaused);
-    io.emit('GAME_STATE_UPDATE', getEmitSafeGameState());
+    io.emit('GAME_STATE_UPDATE', getEmitSafeGameState()); // Kirim state LENGKAP
     console.log(`Permainan ${gameState.isPaused ? 'dipause' : 'dilanjutkan'}.`);
 }
 
@@ -191,7 +206,7 @@ io.on('connection', (socket) => {
   socket.on('GET_PLAYER_DATA', (playerId) => {
     const player = players.get(playerId);
     if (player) {
-      player.socketId = socket.id;
+      player.socketId = socket.id; // <-- Update socketId jika pemain re-connect
       socket.data.playerId = playerId;
       socket.emit('PLAYER_DATA', player);
       socket.emit('GAME_STATE_UPDATE', getEmitSafeGameState());
@@ -224,8 +239,8 @@ io.on('connection', (socket) => {
     if (socket.data.isAdmin) stopGame();
   });
 
-  socket.on('ADMIN_TOGGLE_PAUSE', () => {
-      if (socket.data.isAdmin) togglePauseGame();
+  socket.on('ADMIN_TOGGLE_PAUSE', (newSettings) => { 
+      if (socket.data.isAdmin) togglePauseGame(newSettings); 
   });
 
   socket.on('ADMIN_CALL_NUMBER', (number) => {
@@ -242,7 +257,7 @@ io.on('connection', (socket) => {
   });
 
 
-  // --- (PERUBAHAN BESAR) Event Klaim BARIS dari Pemain ---
+  // --- Event Klaim BARIS dari Pemain ---
   socket.on('CLAIM_ROW', (data) => {
     const { ticketId, rowIndex } = data;
     const playerId = socket.data.playerId;
@@ -266,7 +281,7 @@ io.on('connection', (socket) => {
         return deny(`Anda sudah pernah klaim Baris ${rowIndex + 1}!`);
     }
 
-    const row = ticket.rows[rowIndex]; // Ambil data baris (sekarang sudah tidak di-sort)
+    const row = ticket.rows[rowIndex]; 
     const isRowComplete = row.every(num => gameState.calledNumbers.has(num));
 
     if (isRowComplete) {

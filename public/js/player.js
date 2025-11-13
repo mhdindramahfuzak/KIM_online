@@ -14,6 +14,7 @@ const winConditionDisplay = document.getElementById('win-condition-display');
 let myTickets = []; 
 let clientCalledNumbers = new Set(); // "Kebenaran" dari Server
 let playerMarkedNumbers = new Set(); // "Catatan" klik dari Pemain
+let currentWinCondition = '?'; // <-- TAMBAHAN: Lacak kondisi menang
 
 // --- Fungsi ---
 function loadPlayerMarks() {
@@ -38,6 +39,12 @@ function renderTickets(tickets) {
   const ticketEl = document.createElement('div');
   ticketEl.classList.add('ticket-section', 'ticket-single'); 
   ticketEl.dataset.ticketId = ticket.id;
+
+  // Cek state warna saat ini (jika ada) dan terapkan saat render
+  // Ini untuk mengatasi jika GAME_STATE_UPDATE datang sebelum PLAYER_DATA
+  const currentColor = document.body.dataset.ticketColor || 'yellow'; // Ambil dari body
+  ticketEl.classList.add(`color-${currentColor}`);
+
 
   let ticketHTML = `<h3>Tiket Utama</h3>`;
   ticketHTML += `<div class="ticket-layout-container">`;
@@ -96,7 +103,6 @@ function updateTicketVisuals() {
         }
     });
 
-    // --- PERUBAHAN LOGIKA DI SINI ---
     // TUGAS 2: Cek Tombol Klaim 
     if (myTickets.length === 0) return;
     const ticket = myTickets[0];
@@ -116,7 +122,6 @@ function updateTicketVisuals() {
         // Tombol HANYA aktif jika KEDUA syarat terpenuhi
         button.disabled = !(isServerValid && isPlayerMarked);
     }
-    // --- AKHIR PERUBAHAN LOGIKA ---
 }
 
 function handleNumberClick(e) {
@@ -130,10 +135,8 @@ function handleNumberClick(e) {
     playerMarkedNumbers.add(number); 
     savePlayerMarks(); 
     
-    // --- TAMBAHAN PENTING ---
     // Setelah klik, cek ulang semua tombol
     updateTicketVisuals(); 
-    // --- AKHIR TAMBAHAN ---
 
   } else {
     cell.classList.add('shake');
@@ -154,17 +157,17 @@ function handleClaimClick(e) {
 function updateGameStatusUI(status, message = '', winCondition = '') {
   statusBar.className = `status-${status}`;
   let statusText = message;
-  currentWinCondition = winCondition; 
+  currentWinCondition = winCondition || currentWinCondition; // Update kondisi menang
 
   if (status === 'running' || status === 'paused') {
-      let conditionText = winCondition.replace('_', ' ');
-      if (winCondition === 'full_house') conditionText = '6 Baris (Full House)';
+      let conditionText = currentWinCondition.replace('_', ' ');
+      if (currentWinCondition === 'full_house') conditionText = '6 Baris (Full House)';
       winConditionDisplay.textContent = conditionText;
       statusText = status === 'paused' ? 'Permainan Dijeda Admin...' : 'Permainan Berlangsung...';
   } else {
       winConditionDisplay.textContent = '?';
   }
-  statusBar.textContent = statusText + (winCondition ? ` | Target: ${winCondition.replace('_', ' ')}` : '');
+  statusBar.textContent = statusText; // Hapus target dari status bar
 }
 
 // --- Logika Utama Saat Halaman Dimuat ---
@@ -187,14 +190,28 @@ socket.on('GAME_STATE_UPDATE', (gameState) => {
   clientCalledNumbers = new Set(gameState.calledNumbers); 
   lastNumberDisplay.innerText = gameState.lastNumber || '-';
   updateGameStatusUI(gameState.status, '', gameState.winCondition);
+  
+  // --- (INI PERUBAHANNYA) ---
+  const newColor = gameState.ticketColor || 'yellow';
+  // Simpan di body untuk referensi jika tiket di-render ulang
+  document.body.dataset.ticketColor = newColor; 
+  
+  // Terapkan warna tiket
+  const ticketEl = document.querySelector('.ticket-section');
+  if (ticketEl) {
+      // Hapus kelas warna lama
+      ticketEl.classList.remove('color-yellow', 'color-white', 'color-blue', 'color-pink', 'color-green');
+      // Tambah kelas warna baru
+      ticketEl.classList.add(`color-${newColor}`);
+  }
+  // --- (AKHIR PERUBAHAN) ---
+
   updateTicketVisuals(); 
 });
 
 socket.on('NEW_NUMBER', (number) => {
   clientCalledNumbers.add(number); 
   lastNumberDisplay.innerText = number;
-  // Ini akan cek tombol, tapi tombol tidak akan nyala
-  // sampai pemain mengklik angkanya
   updateTicketVisuals();
 });
 

@@ -92,7 +92,7 @@
   grid-template-columns: repeat(5, 1fr); 
   grid-template-rows: repeat(6, auto); 
   gap: 0; 
-  background-color: #ffff00; 
+  background-color: #ffff00; /* Default Kuning */
   border: 2px solid #333; 
   overflow: hidden; 
   border-radius: 8px;
@@ -104,7 +104,8 @@
   font-size: 1.3em;
   font-weight: bold;
   text-align: center;
-  background-color: #ffff00; 
+  background-color: #ffff00; /* Default Kuning */
+  color: #333; /* Default Teks Hitam */
   cursor: pointer;
   user-select: none;
   transition: all 0.2s ease;
@@ -115,8 +116,9 @@
   min-height: 50px;
 }
 
+/* Ini adalah default warna "marked" */
 .number-cell.marked {
-  background-color: #28a745;
+  background-color: #28a745; /* Hijau Standar */
   color: white;
   text-decoration: line-through;
   transform: scale(0.95);
@@ -159,3 +161,84 @@
 .number-cell:nth-child(n+16):nth-child(-n+20) {
   border-bottom: 4px solid #000;
 }
+
+
+/* ==============================================
+--- CSS UNTUK WARNA TIKET BARU --- 
+==============================================
+*/
+
+/* Default Kuning */
+.ticket-section.color-yellow .ticket-grid-5x6 {
+  background-color: #ffff00;
+  border-color: #333;
+}
+.ticket-section.color-yellow .number-cell {
+  background-color: #ffff00;
+  color: #333;
+  border-color: #999;
+}
+/* Warna marked untuk kuning sama dengan default, jadi tidak perlu di-override */
+
+
+/* Putih */
+.ticket-section.color-white .ticket-grid-5x6 {
+  background-color: #ffffff;
+  border-color: #ccc;
+}
+.ticket-section.color-white .number-cell {
+  background-color: #ffffff;
+  color: #333;
+  border-color: #ddd;
+}
+.ticket-section.color-white .number-cell.marked { /* <-- TAMBAHAN/PERUBAHAN DI SINI */
+  background-color: #28a745; /* Tetap hijau standar */
+  color: #ffffff;
+}
+
+/* Biru */
+.ticket-section.color-blue .ticket-grid-5x6 {
+  background-color: #e0f2fe; /* light-blue-100 */
+  border-color: #7dd3fc; /* light-blue-300 */
+}
+.ticket-section.color-blue .number-cell {
+  background-color: #e0f2fe;
+  color: #0c4a6e; /* cyan-900 */
+  border-color: #bae6fd; /* light-blue-200 */
+}
+.ticket-section.color-blue .number-cell.marked {
+  background-color: #16a34a; /* green-600 (hijau yang lebih gelap) */
+  color: #ffffff;
+}
+
+/* Pink */
+.ticket-section.color-pink .ticket-grid-5x6 {
+  background-color: #fdf2f8; /* pink-50 */
+  border-color: #f472b6; /* pink-400 */
+}
+.ticket-section.color-pink .number-cell {
+  background-color: #fdf2f8;
+  color: #831843; /* pink-900 */
+  border-color: #fbcfe8; /* pink-200 */
+}
+.ticket-section.color-pink .number-cell.marked {
+  background-color: #16a34a; /* green-600 */
+  color: #ffffff;
+}
+
+/* Hijau */
+.ticket-section.color-green .ticket-grid-5x6 {
+  background-color: #f0fdf4; /* green-50 */
+  border-color: #4ade80; /* green-400 */
+}
+.ticket-section.color-green .number-cell {
+  background-color: #f0fdf4;
+  color: #14532d; /* green-900 */
+  border-color: #bbf7d0; /* green-200 */
+}
+.ticket-section.color-green .number-cell.marked { /* <-- TAMBAHAN/PERUBAHAN DI SINI */
+    background-color: #22c55e; /* green-500, hijau yang sedikit lebih gelap dari background-nya */
+    color: #ffffff;
+}
+
+/* --- AKHIR CSS WARNA --- */
