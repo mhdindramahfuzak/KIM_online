@@ -241,4 +241,8 @@
     color: #ffffff;
 }
 
+.ticket-section.color-yellow .number-cell.marked { /* <-- TAMBAHAN/PERUBAHAN DI SINI */
+  background-color: #28a745; /* Tetap hijau standar */
+  color: #ffffff;
+}
 /* --- AKHIR CSS WARNA --- */
